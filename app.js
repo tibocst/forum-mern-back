@@ -1,31 +1,15 @@
 require('dotenv').config();
-const { MongoClient } = require('mongodb');
-const client = new MongoClient(process.env.MONGO_URL)
+const { connectDb } = require('./src/services/mongoose');
+const userRoutes = require('./src/routes/user');
+const express = require('express');
+const app = express();
+const port = process.env.PORT || 3000; 
 
-async function main() {
-    await client.connect();
-    console.log('connexion OK!');
-    return 'done';
-};
+connectDb().catch(err => console.log(err));
 
-main()
-    .then(console.log)
-    .then(console.error)
-    .finally(() => client.close())
+app.use(express.json());
+app.use(userRoutes);
 
-
-// const express = require("express");
-// const app = express();
-// const port = 3000; 
-
-// app.get("/", (req,res) => {
-//     res.send("Racine ddd");
-// });
-
-// app.get("/About", (req,res) => {
-//     res.send("About");
-// });
-
-// app.listen(port, () => {
-//     console.log(`App listening on port ${port}!`);
-// });
+app.listen(port, () => {
+    console.log(`App listening on port ${port}!`);
+});
