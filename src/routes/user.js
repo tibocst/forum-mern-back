@@ -1,28 +1,32 @@
 const express = require('express');
 const User = require('../models/user');
+const authentification = require('../middlewares/authentification');
 const router = new express.Router();
 
 router.post('/users', async (req, res, next) => {
     const user = new User(req.body);
 
     try {
-        const saveUser = await user.save();
-        res.status(201).send(saveUser);
+        const authToken = await user.generateAuthTokenAndSaveUser();
+        res.status(201).send({user, authToken});
     } catch (e) {
         res.status(400).send(e);
     }
 });
 
-router.post('/users/login', async (req, res, next) => {
+router.post('/users/login', async (req, res) => {
     try {
         const user = await User.findUser(req.body.email, req.body.password);
-        res.send(user);
+        console.log(user)
+        const authToken = await user.generateAuthTokenAndSaveUser();
+        res.send({ user, authToken });
     } catch (e) {
+        console.log(e)
         res.status(400).send(e);
     }
 });
 
-router.get('/users', async (req, res, next) => {
+router.get('/users', authentification, async (req, res, next) => {
     try {
         const users = await User.find({});
         if (!users) return res.status(404).send('User not found!');
@@ -30,6 +34,10 @@ router.get('/users', async (req, res, next) => {
     } catch (e) {
         res.status(500).send(e);
     }
+});
+
+router.get('/users/me', authentification, async (req, res, next) => {
+    res.send(req.user);
 });
 
 router.get('/users/:id', async (req, res, next) => {

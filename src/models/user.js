@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const validator = require("validator");
-const bcrypt = require('bcryptjs')
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const userSchema = new mongoose.Schema({
   email: {
@@ -16,16 +17,26 @@ const userSchema = new mongoose.Schema({
   password: {
     type: String,
     required: true,
-    validate(v) {
-      if (!validator.isLength(v, { min: 4, max: 20 }))
-        throw new Error("Le mot de passe doit être entre 4 et 20 caractères!");
-    },
   },
+  authTokens: [{
+    authToken : {
+      type: String,
+      required: true
+    }
+  }]
 });
 
-userSchema.statics.findUser = async(email,password) => {
-    const user = User.findOne({ email });
-    if(!user) throw new Error('Erreur, pas possible de se connecter!');
+userSchema.methods.generateAuthTokenAndSaveUser = async function() {
+  console.log(this)
+  const authToken = jwt.sign({ _id: this._id.toString() }, 'foo');
+  this.authTokens.push({ authToken });
+  await this.save();
+  return authToken;
+}
+
+userSchema.statics.findUser = async (email, password) => {
+    const user = await User.findOne({ email });
+    if (!user) throw new Error('Erreur, pas possible de se connecter!');
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if(!isPasswordValid) throw new Error('Erreur, pas possible de se connecter!');
     return user;
