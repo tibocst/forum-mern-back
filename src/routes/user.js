@@ -29,7 +29,6 @@ router.post('/users/login', async (req, res) => {
 router.get('/users', authentification, async (req, res, next) => {
     try {
         const users = await User.find({});
-        if (!users) return res.status(404).send('User not found!');
         res.send(users);
     } catch (e) {
         res.status(500).send(e);
