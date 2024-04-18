@@ -17,12 +17,34 @@ router.post('/users', async (req, res, next) => {
 router.post('/users/login', async (req, res) => {
     try {
         const user = await User.findUser(req.body.email, req.body.password);
-        console.log(user)
         const authToken = await user.generateAuthTokenAndSaveUser();
         res.send({ user, authToken });
     } catch (e) {
-        console.log(e)
         res.status(400).send(e);
+    }
+});
+
+router.post('/users/logout', authentification, async (req, res) => {
+    try {
+       req.user.authTokens = req.user.authTokens.filter((authToken) => {
+        return authToken.authToken !== req.authToken;
+       });
+
+       await req.user.save();
+       res.send();
+    } catch (e) {
+        res.status(500).send(e);
+    }
+});
+
+router.post('/users/logout/all', authentification, async (req, res) => {
+    try {
+       req.user.authTokens = [];
+
+       await req.user.save();
+       res.send();
+    } catch (e) {
+        res.status(500).send(e);
     }
 });
 
